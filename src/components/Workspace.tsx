@@ -4,6 +4,7 @@ import { getTeam, useDeliverableProgress, useProgress } from "../lib/store";
 import { Widget } from "./widgets";
 
 const DEADLINE = new Date("2026-07-28T23:59:00");
+const BASE = import.meta.env.BASE_URL; // e.g. "/meet-case-studies/"
 
 function useCountdown() {
   const [now, setNow] = useState(() => Date.now());
@@ -103,7 +104,7 @@ export default function Workspace() {
   const pct = Math.round(overall * 100);
 
   const logout = () => {
-    window.location.href = "/";
+    window.location.href = BASE;
   };
 
   return (
@@ -111,7 +112,7 @@ export default function Workspace() {
       {/* header */}
       <header className="sticky top-0 z-30 border-b border-line bg-paper/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-          <a href="/" className="flex items-center gap-2">
+          <a href={BASE} className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-ink font-display text-sm font-bold text-coral">
               S
             </span>
