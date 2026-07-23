@@ -58,7 +58,7 @@ export interface Part {
   deliverables: Deliverable[];
 }
 
-const STAKEHOLDER_TYPES = ["Deciders", "Implementers", "Developers", "Beneficiaries"];
+const STAKEHOLDER_TYPES = ["Deciders", "Implementers", "Influencers", "Beneficiaries"];
 
 export const PARTS: Part[] = [
   {
