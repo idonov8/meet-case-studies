@@ -75,14 +75,14 @@ const appUrl = `${base.replace(/\/$/, "")}/app`;
     <header class="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:pt-14">
       <div class="rise">
         <span class="eyebrow">The deliverables, made interactive</span>
-        <h1 class="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+        <h1 class="mt-4 font-display text-4xl font-extrabold leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">
           A real company.<br />
           A real challenge.<br />
-          <span class="text-brand">One workspace.</span>
+          <span class="text-red">One workspace.</span>
         </h1>
         <p class="mt-6 max-w-md text-lg text-slate">
           Executives handed your team a real challenge. This is where you research the company, build the
-          analysis, and ship your agent — drafted, structured, and tracked in one place. Not a document. A working room.
+          analysis, and ship your agent.
         </p>
 
         <!-- signature: the four-day arc -->
@@ -187,11 +187,11 @@ const appUrl = `${base.replace(/\/$/, "")}/app`;
               <span class="font-mono text-[0.65rem] uppercase tracking-widest text-brand-deep">Part {p.index}</span>
               <h3 class="mt-1 font-display text-xl font-bold">{p.title}</h3>
               <p class="mt-1 text-sm text-slate">{p.blurb}</p>
-              <ul class="mt-4 flex flex-wrap gap-1.5">
+              {/* <ul class="mt-4 flex flex-wrap gap-1.5">
                 {p.deliverables.map((d) => (
                   <li class="rounded-full bg-mist px-2.5 py-1 text-[0.7rem] text-ink-soft">{d.title}</li>
                 ))}
-              </ul>
+              </ul> */}
             </div>
           ))
         }

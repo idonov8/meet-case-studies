@@ -174,7 +174,7 @@ export const PARTS: Part[] = [
       {
         id: "lifecycle",
         title: "Product life cycle",
-        prompt: "In what stage of the product life cycle is the company, and what does that mean?",
+        prompt: "In what stage of the product life cycle is the company, and what does that mean? Click the stage to choose it.",
         day: 2,
         kind: "lifecycle",
       },
