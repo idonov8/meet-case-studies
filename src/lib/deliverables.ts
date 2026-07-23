@@ -62,6 +62,7 @@ export interface Deliverable {
   // kind-specific config
   placeholder?: string;
   readonly?: boolean; // renders as a read-only preview instead of editable fields (e.g. data synced from a database)
+  plain?: boolean; // kind "text" only — plain single-line input instead of the rich text editor (e.g. a URL field)
   sections?: Section[];
   sectionsSeed?: Record<string, string>;
   fields?: RecordField[];
@@ -482,6 +483,7 @@ export const PARTS: Part[] = [
         prompt: "Link your presentation — make sure to give access.",
         day: 3,
         kind: "text",
+        plain: true,
         placeholder: "https://… (give edit/view access!)",
       },
       {

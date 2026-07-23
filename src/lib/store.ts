@@ -62,7 +62,9 @@ export function useDeliverable<T>(id: string, fallback: T): [T, (v: T) => void] 
 // --- Completion heuristics -------------------------------------------------
 
 function nonEmpty(s: unknown): boolean {
-  return typeof s === "string" && s.trim().length > 0;
+  // Rich text fields store HTML (e.g. an empty editor is "<p></p>"), so strip tags before
+  // checking — this also works unchanged for plain-string values that have no markup.
+  return typeof s === "string" && s.replace(/<[^>]*>/g, "").trim().length > 0;
 }
 
 export function completion(d: Deliverable, value: unknown): number {

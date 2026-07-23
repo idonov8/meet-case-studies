@@ -97,3 +97,56 @@
   line-height: 1.6;
 }
 .field::placeholder { color: color-mix(in srgb, var(--color-slate) 65%, transparent); }
+
+/* Rich text editor (Tiptap) — content area */
+.rte-content {
+  outline: none;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.rte-content > * + * { margin-top: 0.5em; }
+.rte-content h1, .rte-content h2, .rte-content h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.rte-content h1 { font-size: 1.3em; }
+.rte-content h2 { font-size: 1.15em; }
+.rte-content h3 { font-size: 1.05em; }
+.rte-content ul, .rte-content ol { padding-left: 1.25em; }
+.rte-content ul { list-style: disc; }
+.rte-content ol { list-style: decimal; }
+.rte-content u { text-decoration: underline; }
+.rte-content blockquote {
+  border-left: 3px solid var(--color-brand);
+  padding-left: 0.75em;
+  color: var(--color-slate);
+}
+.rte-content a { color: var(--color-brand-deep); text-decoration: underline; }
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--color-slate) 65%, transparent);
+}
+
+/* Rich text editor — toolbar show/hide animation */
+.rte-toolbar {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  overflow: hidden;
+  pointer-events: none;
+  transition:
+    max-height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.16s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rte-toolbar--visible {
+  max-height: 5rem; /* generous headroom in case the buttons wrap to a second row on narrow widths */
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}

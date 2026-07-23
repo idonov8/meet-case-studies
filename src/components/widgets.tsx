@@ -1,4 +1,7 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import type { Deliverable, RecordField, TrackerStatus } from "../lib/deliverables";
 import { useDeliverable } from "../lib/store";
 import { MOCK_COMPANY_NAME, MOCK_TEAM_MEMBERS } from "../lib/mockTeam";
@@ -7,33 +10,144 @@ import { MOCK_COMPANY_NAME, MOCK_TEAM_MEMBERS } from "../lib/mockTeam";
 /* Shared primitives                                                   */
 /* ------------------------------------------------------------------ */
 
-function AutoTextarea({
+const menuBtn =
+  "flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm font-semibold text-slate hover:bg-mist hover:text-ink transition-colors";
+const menuBtnActive = "bg-ink text-paper hover:bg-ink hover:text-paper";
+
+function IconBulletList() {
+  return (
+    <svg width="15" height="13" viewBox="0 0 16 14" fill="none" aria-hidden>
+      <circle cx="1.5" cy="2" r="1.4" fill="currentColor" />
+      <circle cx="1.5" cy="7" r="1.4" fill="currentColor" />
+      <circle cx="1.5" cy="12" r="1.4" fill="currentColor" />
+      <path d="M5.5 2h9M5.5 7h9M5.5 12h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MenuButton({
+  onClick,
+  active,
+  label,
+  title,
+  className,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  label: ReactNode;
+  title: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${menuBtn} ${active ? menuBtnActive : ""} ${className ?? ""}`}
+      title={title}
+      aria-label={title}
+      aria-pressed={!!active}
+      // mousedown (not click), and blur the field never fires: this keeps the editor
+      // focused through the click so the toolbar doesn't disappear mid-interaction
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function RichTextToolbar({ editor, visible }: { editor: Editor; visible: boolean }) {
+  const setLink = () => {
+    const prev = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("Link URL", prev ?? "https://");
+    if (url == null) return;
+    if (url === "") {
+      editor.chain().focus().unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    }
+  };
+  return (
+    <div className={`rte-toolbar flex items-center gap-1 ${visible ? "rte-toolbar--visible" : ""}`}>
+      <div className="flex w-full flex-wrap items-center gap-1 border-b border-line pb-2 mb-2">
+        <MenuButton className="font-bold" label="B" title="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} />
+        <MenuButton className="italic" label="I" title="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} />
+        <MenuButton className="underline" label="U" title="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} />
+        <span className="mx-0.5 h-5 w-px bg-line" />
+        <MenuButton
+          className="text-lg font-bold"
+          label="H1"
+          title="Heading 1"
+          active={editor.isActive("heading", { level: 1 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        />
+        <MenuButton
+          className="text-base font-bold"
+          label="H2"
+          title="Heading 2"
+          active={editor.isActive("heading", { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        />
+        <MenuButton
+          className="text-sm font-bold"
+          label="H3"
+          title="Heading 3"
+          active={editor.isActive("heading", { level: 3 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        />
+        <span className="mx-0.5 h-5 w-px bg-line" />
+        <MenuButton label={<IconBulletList />} title="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
+        <MenuButton label="1." title="Numbered list" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
+        <MenuButton label="❝" title="Blockquote" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+        <MenuButton label="🔗" title="Link" active={editor.isActive("link")} onClick={setLink} />
+      </div>
+    </div>
+  );
+}
+
+function RichTextField({
   value,
   onChange,
   placeholder,
-  minRows = 2,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-  minRows?: number;
 }) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
+  const [focused, setFocused] = useState(false);
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        codeBlock: false,
+        horizontalRule: false,
+        strike: false,
+        link: { openOnClick: false, autolink: true },
+      }),
+      Placeholder.configure({ placeholder }),
+    ],
+    content: value,
+    immediatelyRender: false,
+    editorProps: { attributes: { class: "rte-content" } },
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onFocus: () => setFocused(true),
+    onBlur: () => setFocused(false),
+  });
+
+  // Keep external resets (e.g. "reset all") in sync without fighting the user's cursor.
+  useEffect(() => {
+    if (!editor || editor.isFocused) return;
+    if (editor.getHTML() !== value) editor.commands.setContent(value, { emitUpdate: false });
+  }, [value, editor]);
+
+  if (!editor) return null;
+
   return (
-    <textarea
-      ref={ref}
-      rows={minRows}
-      className="field text-[0.95rem]"
-      value={value}
-      placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <div className="rte">
+      <RichTextToolbar editor={editor} visible={focused} />
+      <EditorContent editor={editor} className="field" />
+    </div>
   );
 }
 
@@ -97,7 +211,16 @@ function TextWidget({ d }: { d: Deliverable }) {
   const [value, setValue] = useDeliverable<string>(d.id, "");
   return (
     <div className="rounded-lg bg-panel/60 px-4 py-3 hairline">
-      <AutoTextarea value={value} onChange={setValue} placeholder={d.placeholder} minRows={2} />
+      {d.plain ? (
+        <input
+          className="field text-[0.95rem]"
+          value={value}
+          placeholder={d.placeholder}
+          onChange={(e) => setValue(e.target.value)}
+        />
+      ) : (
+        <RichTextField value={value} onChange={setValue} placeholder={d.placeholder} />
+      )}
     </div>
   );
 }
@@ -167,7 +290,7 @@ function SectionsWidget({ d }: { d: Deliverable }) {
                 onChange={(e) => set(e.target.value)}
               />
             ) : (
-              <AutoTextarea value={value[s.key] ?? ""} onChange={set} placeholder={s.placeholder} />
+              <RichTextField value={value[s.key] ?? ""} onChange={set} placeholder={s.placeholder} />
             )}
           </label>
         );
@@ -201,7 +324,7 @@ function FieldInput({ field, value, onChange }: { field: RecordField; value: str
     );
   }
   if (field.type === "textarea") {
-    return <AutoTextarea value={value ?? ""} onChange={onChange} placeholder={field.placeholder} />;
+    return <RichTextField value={value ?? ""} onChange={onChange} placeholder={field.placeholder} />;
   }
   return (
     <input
@@ -679,7 +802,7 @@ function LifecycleWidget({ d }: { d: Deliverable }) {
       </div>
       <label className="mt-2 flex flex-col gap-1">
         <span className="eyebrow">Why here?</span>
-        <AutoTextarea
+        <RichTextField
           value={value.note}
           onChange={(v) => setValue({ ...value, note: v })}
           placeholder="Evidence that puts the product at this stage…"
@@ -747,7 +870,7 @@ function PaletteWidget({ d }: { d: Deliverable }) {
     <div className="rounded-lg bg-panel/40 p-4 hairline">
       <label className="mb-4 flex flex-col gap-1">
         <span className="eyebrow">Assessment — are they communicating well? What needs to change?</span>
-        <AutoTextarea
+        <RichTextField
           value={value.assessment}
           onChange={(v) => setValue({ ...value, assessment: v })}
           placeholder="Their visual identity says…  It works / falls short because…"
@@ -791,7 +914,7 @@ function PaletteWidget({ d }: { d: Deliverable }) {
       </div>
       <label className="mt-4 flex flex-col gap-1">
         <span className="eyebrow">Tone of voice</span>
-        <AutoTextarea
+        <RichTextField
           value={value.tone}
           onChange={(v) => setValue({ ...value, tone: v })}
           placeholder="Confident, playful, technical…  Three words that capture the brand."
