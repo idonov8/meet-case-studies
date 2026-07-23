@@ -107,8 +107,12 @@ export function completion(d: Deliverable, value: unknown): number {
       return checked / total;
     }
     case "palette": {
-      const v = value as { tone?: string; swatches?: string[] };
-      return nonEmpty(v.tone) || (v.swatches?.length ?? 0) > 0 ? 1 : 0;
+      const v = value as { tone?: string; assessment?: string; swatches?: string[] };
+      return nonEmpty(v.assessment) || nonEmpty(v.tone) || (v.swatches?.length ?? 0) > 0 ? 1 : 0;
+    }
+    case "upload": {
+      const v = value as { name?: string };
+      return nonEmpty(v.name) ? 1 : 0;
     }
     default:
       return 0;
@@ -122,17 +126,20 @@ export interface Progress {
   total: number;
 }
 
+const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+
 function computeProgress(): Progress {
+  // Optional deliverables don't count toward completion, so teams can still hit 100%.
   const byDeliverable: Record<string, number> = {};
   for (const d of ALL_DELIVERABLES) byDeliverable[d.id] = completion(d, state[d.id]);
 
   const byPart: Record<string, number> = {};
   for (const p of PARTS) {
-    const vals = p.deliverables.map((d) => byDeliverable[d.id]);
-    byPart[p.id] = vals.reduce((a, b) => a + b, 0) / vals.length;
+    byPart[p.id] = avg(p.deliverables.filter((d) => !d.optional).map((d) => byDeliverable[d.id]));
   }
-  const all = ALL_DELIVERABLES.map((d) => byDeliverable[d.id]);
-  const overall = all.reduce((a, b) => a + b, 0) / all.length;
+  const required = ALL_DELIVERABLES.filter((d) => !d.optional);
+  const all = required.map((d) => byDeliverable[d.id]);
+  const overall = avg(all);
   const done = all.filter((v) => v >= 1).length;
   return { overall, byPart, done, total: all.length };
 }

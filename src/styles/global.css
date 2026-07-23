@@ -1,27 +1,30 @@
 @import "tailwindcss";
 
 /*
-  Design system — "Sprint Room"
-  A drafting-table workspace for startup case-study teams racing a 4-day deadline.
-  Dominant identity: deep pine ink + coral signal on warm paper, grotesque display type.
+  Design system — meet · Case Studies
+  A workspace for MEET consultancy case-study teams.
+  Identity: deep teal ink + meet teal (#34afb0) accent on clean paper, Proxima Nova type.
 */
 
 @theme {
-  --color-ink: #0c2a27;
-  --color-ink-soft: #1c3d38;
-  --color-paper: #fafaf6;
-  --color-panel: #eef1ea;
-  --color-mist: #e3e8df;
-  --color-line: #d7ddd1;
-  --color-slate: #55655f;
-  --color-coral: #fb5230;
-  --color-coral-deep: #d63d1f;
-  --color-gold: #e39a12;
-  --color-teal: #128379;
+  --color-ink: #123330;
+  --color-ink-soft: #1f4a45;
+  --color-paper: #fbfcfc;
+  --color-panel: #eef4f3;
+  --color-mist: #e0ecea;
+  --color-line: #d3e2df;
+  --color-slate: #566f6b;
+  /* meet brand */
+  --color-brand: #34afb0;
+  --color-brand-deep: #2b9192;
+  --color-red: #e04444;
+  --color-green: #2f9e63;
   --color-sky: #3d7de0;
 
-  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  /* Proxima Nova is the meet brand face; if the user's Typekit provides it,
+     it wins. Figtree (Google) is the reliable free fallback. */
+  --font-display: "Proxima Nova", "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Proxima Nova", "Figtree", system-ui, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
 
   --radius-card: 14px;
@@ -44,11 +47,11 @@
     letter-spacing: -0.02em;
   }
   ::selection {
-    background: var(--color-coral);
+    background: var(--color-brand);
     color: #fff;
   }
   :focus-visible {
-    outline: 2px solid var(--color-coral);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
     border-radius: 4px;
   }

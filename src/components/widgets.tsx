@@ -62,6 +62,14 @@ function IconTrash() {
   );
 }
 
+function IconArrowDeeper() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <path d="M3 1v5a2 2 0 0 0 2 2h5M8 5.5 11 8l-3 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
@@ -87,16 +95,43 @@ function SectionsWidget({ d }: { d: Deliverable }) {
   const [value, setValue] = useDeliverable<Record<string, string>>(d.id, {});
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {d.sections!.map((s) => (
-        <label key={s.key} className="flex flex-col gap-1.5 rounded-lg bg-panel/60 px-4 py-3 hairline">
-          <span className="eyebrow">{s.label}</span>
-          <AutoTextarea
-            value={value[s.key] ?? ""}
-            onChange={(v) => setValue({ ...value, [s.key]: v })}
-            placeholder={s.placeholder}
-          />
-        </label>
-      ))}
+      {d.sections!.map((s) => {
+        const type = s.type ?? "textarea";
+        const set = (v: string) => setValue({ ...value, [s.key]: v });
+        return (
+          <label
+            key={s.key}
+            className={`flex flex-col gap-1.5 rounded-lg bg-panel/60 px-4 py-3 hairline ${
+              type === "textarea" ? "sm:col-span-2" : ""
+            }`}
+          >
+            <span className="eyebrow">{s.label}</span>
+            {type === "select" ? (
+              <select
+                className="w-full rounded-md bg-paper px-2.5 py-1.5 text-sm hairline"
+                value={value[s.key] ?? ""}
+                onChange={(e) => set(e.target.value)}
+              >
+                <option value="">—</option>
+                {s.options!.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            ) : type === "text" ? (
+              <input
+                className="field text-[0.95rem]"
+                value={value[s.key] ?? ""}
+                placeholder={s.placeholder}
+                onChange={(e) => set(e.target.value)}
+              />
+            ) : (
+              <AutoTextarea value={value[s.key] ?? ""} onChange={set} placeholder={s.placeholder} />
+            )}
+          </label>
+        );
+      })}
     </div>
   );
 }
@@ -175,7 +210,7 @@ function RecordsWidget({ d }: { d: Deliverable }) {
             </div>
           )}
           <button
-            className="absolute right-2 top-2 rounded-md p-1.5 text-slate opacity-0 transition-opacity hover:bg-mist hover:text-coral group-hover:opacity-100 focus-visible:opacity-100"
+            className="absolute right-2 top-2 rounded-md p-1.5 text-slate opacity-0 transition-opacity hover:bg-mist hover:text-brand group-hover:opacity-100 focus-visible:opacity-100"
             onClick={() => remove(r._id)}
             aria-label={`Remove ${d.recordNoun} ${i + 1}`}
           >
@@ -286,6 +321,7 @@ function TreeBranch({
   depth,
   update,
   addChild,
+  addSibling,
   remove,
 }: {
   node: TreeNode;
@@ -293,33 +329,51 @@ function TreeBranch({
   depth: number;
   update: (id: string, text: string) => void;
   addChild: (parent: string) => void;
+  addSibling: (node: TreeNode) => void;
   remove: (id: string) => void;
 }) {
   const children = nodes.filter((n) => n.parent === node.id);
   const isRoot = node.parent === null;
   return (
     <li className="relative">
-      <div className="flex items-center gap-2 py-1">
+      <div className="flex flex-wrap items-center gap-2 py-1">
         <div
           className={`flex items-center gap-2 rounded-lg px-3 py-1.5 hairline ${
             isRoot ? "bg-ink text-paper" : "bg-paper"
           }`}
-          style={!isRoot ? { borderLeft: `3px solid var(--color-coral)` } : undefined}
+          style={!isRoot ? { borderLeft: `3px solid var(--color-brand)` } : undefined}
         >
-          {!isRoot && <span className="font-mono text-[0.6rem] text-coral">WHY</span>}
+          {!isRoot && <span className="font-mono text-[0.6rem] text-brand">WHY</span>}
           <input
-            className="min-w-40 bg-transparent text-sm outline-none placeholder:text-slate/60"
+            className={`min-w-40 bg-transparent text-sm outline-none placeholder:text-slate/60 ${
+              isRoot ? "placeholder:text-paper/50" : ""
+            }`}
             value={node.text}
             placeholder={isRoot ? "The core problem…" : "Because…"}
             onChange={(e) => update(node.id, e.target.value)}
           />
         </div>
-        <button className={`${ghostBtn} px-2 py-1`} onClick={() => addChild(node.id)} aria-label="Add why">
-          <IconPlus />
+        <button
+          className={`${ghostBtn} px-2 py-1`}
+          onClick={() => addChild(node.id)}
+          aria-label="Add a deeper why"
+          title="Add a deeper why (a cause of this)"
+        >
+          <IconArrowDeeper /> deeper
         </button>
         {!isRoot && (
           <button
-            className="rounded-md p-1.5 text-slate hover:bg-mist hover:text-coral"
+            className={`${ghostBtn} px-2 py-1`}
+            onClick={() => addSibling(node)}
+            aria-label="Add a why on this level"
+            title="Add another why on the same level"
+          >
+            <IconPlus /> same level
+          </button>
+        )}
+        {!isRoot && (
+          <button
+            className="rounded-md p-1.5 text-slate hover:bg-mist hover:text-brand"
             onClick={() => remove(node.id)}
             aria-label="Remove branch"
           >
@@ -337,6 +391,7 @@ function TreeBranch({
               depth={depth + 1}
               update={update}
               addChild={addChild}
+              addSibling={addSibling}
               remove={remove}
             />
           ))}
@@ -352,6 +407,10 @@ function TreeWidget({ d }: { d: Deliverable }) {
 
   const update = (id: string, text: string) => setNodes(nodes.map((n) => (n.id === id ? { ...n, text } : n)));
   const addChild = (parent: string) => setNodes([...nodes, { id: uid(), parent, text: "" }]);
+  // A sibling shares the node's parent — a "why" on the same level. The root has
+  // no parent, so a sibling of it would be a second root; disallowed in the UI.
+  const addSibling = (node: TreeNode) =>
+    node.parent === null ? undefined : setNodes([...nodes, { id: uid(), parent: node.parent, text: "" }]);
   const remove = (id: string) => {
     const doomed = new Set<string>([id]);
     let grew = true;
@@ -365,7 +424,15 @@ function TreeWidget({ d }: { d: Deliverable }) {
   return (
     <div className="rounded-lg bg-panel/40 p-4 hairline">
       <ul>
-        <TreeBranch node={root} nodes={nodes} depth={0} update={update} addChild={addChild} remove={remove} />
+        <TreeBranch
+          node={root}
+          nodes={nodes}
+          depth={0}
+          update={update}
+          addChild={addChild}
+          addSibling={addSibling}
+          remove={remove}
+        />
       </ul>
     </div>
   );
@@ -384,9 +451,9 @@ interface Task {
 }
 const DAYS = ["Sun", "Mon", "Tue", "Wed"];
 const TRACK_COLORS: Record<string, string> = {
-  Understand: "var(--color-teal)",
+  Understand: "var(--color-brand)",
   Develop: "var(--color-sky)",
-  Present: "var(--color-coral)",
+  Present: "var(--color-red)",
 };
 
 function GanttWidget({ d }: { d: Deliverable }) {
@@ -457,7 +524,7 @@ function GanttWidget({ d }: { d: Deliverable }) {
                 onChange={(e) => update(t.id, { name: e.target.value })}
               />
               <button
-                className="rounded p-1 text-slate opacity-0 hover:text-coral group-hover:opacity-100"
+                className="rounded p-1 text-slate opacity-0 hover:text-brand group-hover:opacity-100"
                 onClick={() => remove(t.id)}
                 aria-label="Remove task"
               >
@@ -517,44 +584,55 @@ function GanttWidget({ d }: { d: Deliverable }) {
 
 const STAGES = ["Development", "Introduction", "Growth", "Maturity", "Decline"];
 
+// Build a smooth curve (Catmull-Rom → cubic Bézier) that passes exactly through
+// the given points, so the plotted dots always sit on the line.
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return "";
+  const p = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = p(i - 1), p1 = p(i), p2 = p(i + 1), p3 = p(i + 2);
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`;
+  }
+  return d;
+}
+
 function LifecycleWidget({ d }: { d: Deliverable }) {
   const [value, setValue] = useDeliverable<{ stage: string; note: string }>(d.id, { stage: "", note: "" });
-  // bell-ish curve points across the 5 stages
-  const pts = [
-    { x: 40, y: 150 },
-    { x: 140, y: 120 },
-    { x: 260, y: 55 },
-    { x: 400, y: 40 },
-    { x: 520, y: 95 },
-  ];
-  const path = `M0,165 C20,160 ${pts[0].x},${pts[0].y} ${pts[1].x},${pts[1].y} S${pts[2].x},${pts[2].y} ${pts[3].x},${pts[3].y} S560,150 560,150`;
+  const W = 600, BASE = 172;
+  // Evenly-spaced stages with the classic PLC height profile (dev low → grow → peak → decline).
+  const ys = [150, 128, 62, 46, 104];
+  const pts = STAGES.map((_, i) => ({ x: 60 + i * ((W - 120) / (STAGES.length - 1)), y: ys[i] }));
+  const path = smoothPath(pts);
   return (
     <div className="rounded-lg bg-panel/40 p-4 hairline">
       <div className="overflow-x-auto">
-        <svg viewBox="0 0 560 190" className="w-full min-w-[520px]" role="group" aria-label="Product life cycle">
-          <line x1="0" y1="170" x2="560" y2="170" stroke="var(--color-line)" strokeWidth="1.5" />
-          <path d={path} fill="none" stroke="var(--color-ink)" strokeWidth="2.5" />
+        <svg viewBox={`0 0 ${W} 200`} className="w-full min-w-[520px]" role="group" aria-label="Product life cycle">
+          <line x1="0" y1={BASE} x2={W} y2={BASE} stroke="var(--color-line)" strokeWidth="1.5" />
+          <path d={path} fill="none" stroke="var(--color-ink)" strokeWidth="2.5" strokeLinecap="round" />
           {STAGES.map((s, i) => {
             const p = pts[i];
             const active = value.stage === s;
             return (
               <g key={s} className="cursor-pointer" onClick={() => setValue({ ...value, stage: s })}>
-                <line x1={p.x} y1={p.y} x2={p.x} y2="170" stroke="var(--color-line)" strokeDasharray="3 3" />
+                <line x1={p.x} y1={p.y} x2={p.x} y2={BASE} stroke="var(--color-line)" strokeDasharray="3 3" />
                 <circle
                   cx={p.x}
                   cy={p.y}
                   r={active ? 9 : 6}
-                  fill={active ? "var(--color-coral)" : "var(--color-paper)"}
-                  stroke={active ? "var(--color-coral)" : "var(--color-ink)"}
+                  fill={active ? "var(--color-brand)" : "var(--color-paper)"}
+                  stroke={active ? "var(--color-brand)" : "var(--color-ink)"}
                   strokeWidth="2.5"
                 />
                 <text
                   x={p.x}
-                  y="185"
+                  y="192"
                   textAnchor="middle"
                   className="font-mono"
-                  fontSize="10"
-                  fill={active ? "var(--color-coral)" : "var(--color-slate)"}
+                  fontSize="11"
+                  fill={active ? "var(--color-brand)" : "var(--color-slate)"}
                   fontWeight={active ? 700 : 400}
                 >
                   {s}
@@ -597,7 +675,7 @@ function ChecklistWidget({ d }: { d: Deliverable }) {
               />
               <span
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                  on ? "border-coral bg-coral text-paper" : "border-line bg-paper"
+                  on ? "border-brand bg-brand text-paper" : "border-line bg-paper"
                 }`}
               >
                 {on && (
@@ -620,17 +698,26 @@ function ChecklistWidget({ d }: { d: Deliverable }) {
 /* ------------------------------------------------------------------ */
 
 function PaletteWidget({ d }: { d: Deliverable }) {
-  const [value, setValue] = useDeliverable<{ swatches: string[]; tone: string }>(d.id, {
-    swatches: ["#0c2a27", "#fb5230"],
+  const [value, setValue] = useDeliverable<{ swatches: string[]; tone: string; assessment: string }>(d.id, {
+    swatches: ["#123330", "#34afb0"],
     tone: "",
+    assessment: "",
   });
   const setSwatch = (i: number, hex: string) =>
     setValue({ ...value, swatches: value.swatches.map((s, idx) => (idx === i ? hex : s)) });
-  const addSwatch = () => setValue({ ...value, swatches: [...value.swatches, "#128379"] });
+  const addSwatch = () => setValue({ ...value, swatches: [...value.swatches, "#e04444"] });
   const removeSwatch = (i: number) => setValue({ ...value, swatches: value.swatches.filter((_, idx) => idx !== i) });
 
   return (
     <div className="rounded-lg bg-panel/40 p-4 hairline">
+      <label className="mb-4 flex flex-col gap-1">
+        <span className="eyebrow">Assessment — are they communicating well? What needs to change?</span>
+        <AutoTextarea
+          value={value.assessment}
+          onChange={(v) => setValue({ ...value, assessment: v })}
+          placeholder="Their visual identity says…  It works / falls short because…"
+        />
+      </label>
       <span className="eyebrow">Brand palette</span>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         {value.swatches.map((hex, i) => (
@@ -660,7 +747,7 @@ function PaletteWidget({ d }: { d: Deliverable }) {
           </div>
         ))}
         <button
-          className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-dashed border-line text-slate hover:border-coral hover:text-coral"
+          className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-dashed border-line text-slate hover:border-brand hover:text-brand"
           onClick={addSwatch}
           aria-label="Add swatch"
         >
@@ -680,11 +767,98 @@ function PaletteWidget({ d }: { d: Deliverable }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* upload — Social Lean Canvas (mock, local-only)                      */
+/* ------------------------------------------------------------------ */
+
+interface Upload {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl?: string; // kept only for small images
+}
+
+// ponytail: the real product will upload to storage on submit. For now we keep
+// the file in localStorage — capped at ~1.2MB and images only, so the shared
+// state JSON can't blow the ~5MB localStorage quota. Upgrade path: swap the
+// FileReader block for an upload to the backend and store the returned URL.
+const PREVIEW_CAP = 1_200_000;
+
+function UploadWidget({ d }: { d: Deliverable }) {
+  const [file, setFile] = useDeliverable<Upload | null>(d.id, null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const onPick = (f: File | undefined) => {
+    if (!f) return;
+    const base: Upload = { name: f.name, type: f.type, size: f.size };
+    if (f.type.startsWith("image/") && f.size <= PREVIEW_CAP) {
+      const reader = new FileReader();
+      reader.onload = () => setFile({ ...base, dataUrl: String(reader.result) });
+      reader.readAsDataURL(f);
+    } else {
+      setFile(base);
+    }
+  };
+
+  const kb = file ? (file.size < 1024 * 1024 ? `${Math.round(file.size / 1024)} KB` : `${(file.size / 1024 / 1024).toFixed(1)} MB`) : "";
+
+  return (
+    <div className="rounded-lg bg-panel/40 p-4 hairline">
+      {!file ? (
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line py-10 text-center transition-colors hover:border-brand">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden className="text-brand">
+            <path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="font-display text-sm font-semibold text-ink">Upload your Social Lean Canvas</span>
+          <span className="text-xs text-slate">Image or PDF — drag in or click to choose</span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={d.accept}
+            className="sr-only"
+            onChange={(e) => onPick(e.target.files?.[0] ?? undefined)}
+          />
+        </label>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {file.dataUrl ? (
+            <img src={file.dataUrl} alt={`Preview of ${file.name}`} className="max-h-80 w-full rounded-lg object-contain ring-1 ring-black/10" />
+          ) : (
+            <div className="flex items-center gap-3 rounded-lg bg-paper px-4 py-6 hairline">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="text-slate">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                <path d="M14 2v6h6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+              <div>
+                <div className="text-sm font-semibold text-ink">{file.name}</div>
+                <div className="text-xs text-slate">Preview available on the live product — file kept locally for now.</div>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="truncate text-xs text-slate">
+              {file.name} · {kb}
+            </span>
+            <button className={ghostBtn} onClick={() => setFile(null)}>
+              <IconTrash /> Remove
+            </button>
+          </div>
+        </div>
+      )}
+      <p className="mt-3 text-xs text-slate">
+        Mock upload — the file stays in your browser. Real submission comes with Google sign-in.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* dispatcher                                                          */
 /* ------------------------------------------------------------------ */
 
 export function Widget({ d }: { d: Deliverable }) {
   switch (d.kind) {
+    case "upload":
+      return <UploadWidget d={d} />;
     case "text":
       return <TextWidget d={d} />;
     case "sections":
