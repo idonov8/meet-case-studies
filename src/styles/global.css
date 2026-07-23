@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/*
+  Design system — "Sprint Room"
+  A drafting-table workspace for startup case-study teams racing a 4-day deadline.
+  Dominant identity: deep pine ink + coral signal on warm paper, grotesque display type.
+*/
+
+@theme {
+  --color-ink: #0c2a27;
+  --color-ink-soft: #1c3d38;
+  --color-paper: #fafaf6;
+  --color-panel: #eef1ea;
+  --color-mist: #e3e8df;
+  --color-line: #d7ddd1;
+  --color-slate: #55655f;
+  --color-coral: #fb5230;
+  --color-coral-deep: #d63d1f;
+  --color-gold: #e39a12;
+  --color-teal: #128379;
+  --color-sky: #3d7de0;
+
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+
+  --radius-card: 14px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-feature-settings: "cv05", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: var(--color-coral);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Utility bits used across components */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+
+.paper-grid {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: -1px -1px;
+}
+
+.hairline {
+  border: 1px solid var(--color-line);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* Autosize textarea baseline */
+.field {
+  width: 100%;
+  background: transparent;
+  resize: none;
+  line-height: 1.6;
+}
+.field::placeholder { color: color-mix(in srgb, var(--color-slate) 65%, transparent); }

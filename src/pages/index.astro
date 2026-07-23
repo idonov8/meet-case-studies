@@ -1,0 +1,143 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { PARTS } from "../lib/deliverables";
+
+const days = [
+  { d: "Sun", label: "Understand", n: "26" },
+  { d: "Mon", label: "Analyze", n: "27" },
+  { d: "Tue", label: "Build & submit", n: "28" },
+  { d: "Wed", label: "Present", n: "29" },
+];
+---
+
+<Layout>
+  <div class="paper-grid min-h-screen">
+    <!-- nav -->
+    <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
+      <a href="/" class="flex items-center gap-2">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-ink font-display text-base font-bold text-coral">S</span>
+        <span class="font-display text-lg font-bold">Sprint Room</span>
+      </a>
+      <span class="eyebrow hidden sm:block">Case Study Sprint · Jul 26–29</span>
+    </nav>
+
+    <!-- hero -->
+    <header class="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:pt-14">
+      <div class="rise">
+        <span class="eyebrow">The deliverables, made interactive</span>
+        <h1 class="mt-4 font-display text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+          Four days.<br />
+          One case study.<br />
+          <span class="text-coral">One workspace.</span>
+        </h1>
+        <p class="mt-6 max-w-md text-lg text-slate">
+          Everything your team needs to research the company, build the analysis, and ship the agent — drafted,
+          structured, and tracked in one place. Not a document. A working room.
+        </p>
+
+        <!-- signature: the four-day arc -->
+        <div class="mt-10">
+          <div class="flex items-end gap-1.5">
+            {
+              days.map((day, i) => (
+                <div class="flex flex-1 flex-col items-center">
+                  <div
+                    class="w-full rounded-t-md"
+                    style={`height:${28 + i * 22}px; background:${i === 3 ? "var(--color-coral)" : "var(--color-teal)"}; opacity:${0.55 + i * 0.15}`}
+                  />
+                  <div class="mt-2 text-center">
+                    <div class="font-mono text-[0.6rem] text-slate">JUL {day.n}</div>
+                    <div class="font-display text-sm font-bold">{day.d}</div>
+                    <div class="text-[0.7rem] text-slate">{day.label}</div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+          <div class="mt-2 h-px w-full bg-line"></div>
+          <p class="eyebrow mt-2">Deadline: Tuesday 11:59 PM · Present Wednesday</p>
+        </div>
+      </div>
+
+      <!-- mock login card -->
+      <div class="rise rounded-2xl bg-ink p-8 text-paper shadow-xl" style="animation-delay:0.1s">
+        <span class="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-coral">Sign in to your team</span>
+        <h2 class="mt-2 font-display text-2xl font-bold">Open your workspace</h2>
+        <p class="mt-2 text-sm text-paper/70">
+          Your answers save to this browser. Google sign-in for real teams is coming soon.
+        </p>
+
+        <form id="login" class="mt-6 flex flex-col gap-3">
+          <label class="flex flex-col gap-1.5">
+            <span class="font-mono text-[0.6rem] uppercase tracking-widest text-paper/60">Team name (optional)</span>
+            <input
+              id="team"
+              type="text"
+              placeholder="e.g. Team Kingfisher"
+              class="rounded-lg border border-paper/20 bg-paper/5 px-3 py-2.5 text-sm text-paper placeholder:text-paper/40 focus:border-coral"
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="mt-1 flex items-center justify-center gap-3 rounded-lg bg-paper px-4 py-3 font-medium text-ink transition-transform hover:-translate-y-0.5"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
+              <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+              <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+              <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/>
+              <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.9 11.42 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+            </svg>
+            Continue with Google
+          </button>
+          <p class="text-center font-mono text-[0.6rem] uppercase tracking-widest text-paper/40">
+            Mock sign-in — goes straight in
+          </p>
+        </form>
+      </div>
+    </header>
+
+    <!-- what's inside -->
+    <section class="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+      <div class="mb-6 flex items-baseline justify-between">
+        <h2 class="font-display text-2xl font-bold">What's inside</h2>
+        <span class="eyebrow">3 parts · 22 deliverables</span>
+      </div>
+      <div class="grid gap-4 md:grid-cols-3">
+        {
+          PARTS.map((p) => (
+            <div class="rounded-[--radius-card] bg-paper p-6 hairline">
+              <span class="font-mono text-[0.65rem] uppercase tracking-widest text-coral">Part {p.index}</span>
+              <h3 class="mt-1 font-display text-xl font-bold">{p.title}</h3>
+              <p class="mt-1 text-sm text-slate">{p.blurb}</p>
+              <ul class="mt-4 flex flex-wrap gap-1.5">
+                {p.deliverables.map((d) => (
+                  <li class="rounded-full bg-mist px-2.5 py-1 text-[0.7rem] text-ink-soft">{d.title}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <footer class="border-t border-line">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 text-xs text-slate sm:px-6">
+        <span>Sprint Room · case study deliverables</span>
+        <a href="/app" class="hover:text-coral">Enter workspace →</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById("login") as HTMLFormElement | null;
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const team = (document.getElementById("team") as HTMLInputElement).value.trim();
+      try {
+        localStorage.setItem("sprint-room:team", team);
+      } catch {}
+      window.location.href = "/app";
+    });
+  </script>
+</Layout>
