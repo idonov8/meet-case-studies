@@ -22,9 +22,9 @@
   --color-sky: #3d7de0;
 
   /* Proxima Nova is the meet brand face; if the user's Typekit provides it,
-     it wins. Figtree (Google) is the reliable free fallback. */
-  --font-display: "Proxima Nova", "Figtree", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Proxima Nova", "Figtree", system-ui, sans-serif;
+     it wins. Montserrat (Google) is the reliable free fallback. */
+  --font-display: "Proxima Nova", "Montserrat", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Proxima Nova", "Montserrat", system-ui, sans-serif;
   --font-mono: "Space Mono", ui-monospace, monospace;
 
   --radius-card: 14px;
