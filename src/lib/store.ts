@@ -66,6 +66,7 @@ function nonEmpty(s: unknown): boolean {
 }
 
 export function completion(d: Deliverable, value: unknown): number {
+  if (d.readonly) return 1; // synced data, not something the team fills in
   if (value == null) return 0;
   switch (d.kind) {
     case "text":
@@ -113,6 +114,13 @@ export function completion(d: Deliverable, value: unknown): number {
     case "upload": {
       const v = value as { name?: string };
       return nonEmpty(v.name) ? 1 : 0;
+    }
+    case "tracker": {
+      const rows = value as Record<string, { status?: string }>;
+      const tasks = d.trackerGroups?.flatMap((g) => g.tasks) ?? [];
+      if (!tasks.length) return 0;
+      const done = tasks.filter((t) => rows[t.key]?.status === "done").length;
+      return done / tasks.length;
     }
     default:
       return 0;

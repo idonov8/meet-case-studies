@@ -1,6 +1,8 @@
 // The structure of the case study, matching the MEET Case Studies deliverables document.
 // Each deliverable maps to an interactive widget (its `kind`).
 
+import { MOCK_CHALLENGE, MOCK_COMPANY_NAME, MOCK_GROUP, MOCK_TEAM_MEMBERS } from "./mockTeam";
+
 export type FieldType = "text" | "textarea" | "select";
 
 export interface RecordField {
@@ -19,6 +21,26 @@ export interface Section {
   options?: string[];
 }
 
+export type TrackerStatus = "not-started" | "in-progress" | "done";
+
+export interface TrackerSeed {
+  owner?: string;
+  status?: TrackerStatus;
+  staffChecked?: boolean;
+  notes?: string;
+}
+
+export interface TrackerTask {
+  key: string;
+  label: string;
+  seed?: TrackerSeed;
+}
+
+export interface TrackerGroup {
+  label: string;
+  tasks: TrackerTask[];
+}
+
 export interface Deliverable {
   id: string;
   title: string;
@@ -35,10 +57,13 @@ export interface Deliverable {
     | "lifecycle"
     | "checklist"
     | "palette"
-    | "upload";
+    | "upload"
+    | "tracker";
   // kind-specific config
   placeholder?: string;
+  readonly?: boolean; // renders as a read-only preview instead of editable fields (e.g. data synced from a database)
   sections?: Section[];
+  sectionsSeed?: Record<string, string>;
   fields?: RecordField[];
   recordNoun?: string; // e.g. "question", "competitor"
   highlightMax?: number; // for records that should stay small (e.g. 2-3 recommendations)
@@ -47,6 +72,7 @@ export interface Deliverable {
   checklist?: string[];
   accept?: string; // for upload
   seedTasks?: { name: string; start: number; end: number; track: string }[];
+  trackerGroups?: TrackerGroup[];
 }
 
 export interface Part {
@@ -72,9 +98,16 @@ export const PARTS: Part[] = [
       {
         id: "brief",
         title: "Project brief",
-        prompt: "Set the basics for your team before you dig in.",
+        prompt: "Your team & company, at a glance — synced from your account.",
         day: 1,
         kind: "sections",
+        readonly: true,
+        sectionsSeed: {
+          organization: MOCK_COMPANY_NAME,
+          challenge: MOCK_CHALLENGE,
+          group: MOCK_GROUP,
+          members: MOCK_TEAM_MEMBERS.join(", "),
+        },
         sections: [
           { key: "organization", label: "Organization", type: "text", placeholder: "The company / initiative you're helping" },
           { key: "challenge", label: "Challenge", type: "text", placeholder: "The challenge they sent you" },
@@ -333,11 +366,82 @@ export const PARTS: Part[] = [
   {
     id: "present",
     index: 3,
-    title: "Present",
-    tagline: "Presentation & agent",
+    title: "Plan & Present",
+    tagline: "Planning & presentation",
     blurb:
-      "Build your presentation and CS agent, plan the four-day sprint, and get ready for the dry run and the final pitch. 5 min presentation, 7 min Q&A.",
+      "Track every task across the sprint, build your presentation and CS agent, and get ready for the dry run and the final pitch. 5 min presentation, 7 min Q&A.",
     deliverables: [
+      {
+        id: "task-tracker",
+        title: "Task Tracker",
+        prompt:
+          "Divide the tasks between your team and keep the status updated — your instructors follow the last two columns.",
+        day: 1,
+        optional: true,
+        kind: "tracker",
+        trackerGroups: [
+          {
+            label: "Part 1 — Company & Challenge Analysis (Sunday → mid-Monday)",
+            tasks: [
+              {
+                key: "t-problem",
+                label: "Problem Statement",
+                seed: { owner: MOCK_TEAM_MEMBERS[0], status: "done", staffChecked: true, notes: "Nice and concise — approved." },
+              },
+              {
+                key: "t-research",
+                label: "Online Research",
+                seed: { owner: MOCK_TEAM_MEMBERS[1], status: "in-progress", notes: "Add two more sources before Monday." },
+              },
+              { key: "t-field", label: "Field Research — interview questions", seed: { owner: MOCK_TEAM_MEMBERS[2] } },
+              { key: "t-solution", label: "Solution Statement" },
+              { key: "t-uvp", label: "UVP" },
+              { key: "t-unfair", label: "Unfair Advantage" },
+              { key: "t-competitive", label: "Competitive Analysis" },
+              { key: "t-stakeholders", label: "Stakeholders & Target Audience" },
+              { key: "t-identity", label: "Visual Identity" },
+              { key: "t-lifecycle", label: "Product Life Cycle" },
+              { key: "t-channels", label: "Functions of Channels" },
+              { key: "t-why", label: "Why Tree" },
+              { key: "t-effect", label: "Effect Analysis" },
+              { key: "t-slc", label: "SLC with Claude" },
+            ],
+          },
+          {
+            label: "Part 2 — Ideation & Solution Development (Monday → Tuesday)",
+            tasks: [
+              { key: "t-ideation", label: "Solution Ideation" },
+              { key: "t-assumptions", label: "Solution-Based Assumptions" },
+              { key: "t-recommendations", label: "Recommendations" },
+              { key: "t-ethics", label: "Ethical Considerations" },
+              { key: "t-agent-req", label: "Agent Requirements" },
+              { key: "t-next-steps", label: "Next Steps" },
+              { key: "t-additional", label: "Additional Research (optional)" },
+            ],
+          },
+          {
+            label: "Part 3 — Presentation & Agent (start Tuesday at the latest!)",
+            tasks: [
+              { key: "t-build-pres", label: "Build the presentation" },
+              { key: "t-build-agent", label: "Build the CS agent (tool call + database + deliverable)" },
+              { key: "t-demo-script", label: "Demo script ready" },
+              { key: "t-github", label: "GitHub repo set up & shared with the team" },
+              { key: "t-submit", label: "Submit everything — Tuesday 11:59 PM" },
+              { key: "t-dry-run", label: "Dry run with instructors — Wednesday" },
+            ],
+          },
+          {
+            label: "Dry-run prep",
+            tasks: [
+              { key: "t-runthrough", label: "Full run-through under 5 minutes" },
+              { key: "t-roles", label: "Roles assigned for each section" },
+              { key: "t-qa", label: "Answers drafted for the 7-minute Q&A" },
+              { key: "t-support", label: "Support ready — research citations & interview answers" },
+              { key: "t-backup", label: "Backup plan if the demo fails" },
+            ],
+          },
+        ],
+      },
       {
         id: "timeline",
         title: "Sprint timeline",
@@ -396,34 +500,6 @@ export const PARTS: Part[] = [
           },
           { key: "reasoning", label: "Why this option?", placeholder: "Your solution needs / doesn't need an agent because…" },
           { key: "github", label: "GitHub repo link", type: "text", placeholder: "https://github.com/…" },
-        ],
-      },
-      {
-        id: "agent-build",
-        title: "Build the CS agent",
-        prompt: "Ship the agent. Everything here is required, whichever option you chose.",
-        day: 3,
-        kind: "checklist",
-        checklist: [
-          "One working tool call",
-          "A real deliverable produced",
-          "A database connection",
-          "Code shared with the team on GitHub",
-          "Demo script ready",
-        ],
-      },
-      {
-        id: "dry-run",
-        title: "Dry-run prep",
-        prompt: "Be ready for honest (harsh!) feedback from the instructors.",
-        day: 3,
-        kind: "checklist",
-        checklist: [
-          "Full run-through under 5 minutes",
-          "Roles assigned for each section",
-          "Answers drafted for the 7-minute Q&A",
-          "Support ready — research citations & interview answers",
-          "Backup plan if the demo fails",
         ],
       },
     ],

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
-import type { Deliverable, RecordField } from "../lib/deliverables";
+import type { Deliverable, RecordField, TrackerStatus } from "../lib/deliverables";
 import { useDeliverable } from "../lib/store";
+import { MOCK_COMPANY_NAME, MOCK_TEAM_MEMBERS } from "../lib/mockTeam";
 
 /* ------------------------------------------------------------------ */
 /* Shared primitives                                                   */
@@ -74,6 +75,20 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+function MockBadge({ note }: { note: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-panel/60 px-3 py-2 hairline">
+      <span
+        className="shrink-0 rounded-full bg-mist px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-slate"
+        title={note}
+      >
+        Mock data
+      </span>
+      <span className="text-xs text-slate">{note}</span>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* text                                                                */
 /* ------------------------------------------------------------------ */
@@ -92,9 +107,34 @@ function TextWidget({ d }: { d: Deliverable }) {
 /* ------------------------------------------------------------------ */
 
 function SectionsWidget({ d }: { d: Deliverable }) {
-  const [value, setValue] = useDeliverable<Record<string, string>>(d.id, {});
+  const [value, setValue] = useDeliverable<Record<string, string>>(d.id, d.sectionsSeed ?? {});
+
+  if (d.readonly) {
+    const values = d.sectionsSeed ?? {};
+    return (
+      <div className="flex flex-col gap-3">
+        <MockBadge note="Preview of your team & company data — will sync live from your account once sign-in is connected." />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {d.sections!.map((s) => (
+            <div
+              key={s.key}
+              className={`flex flex-col gap-1.5 rounded-lg bg-panel/60 px-4 py-3 hairline ${
+                (s.type ?? "textarea") === "textarea" ? "sm:col-span-2" : ""
+              }`}
+            >
+              <span className="eyebrow">{s.label}</span>
+              <span className="whitespace-pre-wrap text-[0.95rem] text-ink">{values[s.key] || "—"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="flex flex-col gap-3">
+      {d.sectionsSeed && <MockBadge note="Pre-filled with a placeholder company & team — replace with your real details." />}
+      <div className="grid gap-3 sm:grid-cols-2">
       {d.sections!.map((s) => {
         const type = s.type ?? "textarea";
         const set = (v: string) => setValue({ ...value, [s.key]: v });
@@ -132,6 +172,7 @@ function SectionsWidget({ d }: { d: Deliverable }) {
           </label>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -318,7 +359,6 @@ interface TreeNode {
 function TreeBranch({
   node,
   nodes,
-  depth,
   update,
   addChild,
   addSibling,
@@ -326,7 +366,6 @@ function TreeBranch({
 }: {
   node: TreeNode;
   nodes: TreeNode[];
-  depth: number;
   update: (id: string, text: string) => void;
   addChild: (parent: string) => void;
   addSibling: (node: TreeNode) => void;
@@ -335,8 +374,8 @@ function TreeBranch({
   const children = nodes.filter((n) => n.parent === node.id);
   const isRoot = node.parent === null;
   return (
-    <li className="relative">
-      <div className="flex flex-wrap items-center gap-2 py-1">
+    <div className="flex items-center">
+      <div className="flex shrink-0 flex-col items-start gap-1.5 py-1">
         <div
           className={`flex items-center gap-2 rounded-lg px-3 py-1.5 hairline ${
             isRoot ? "bg-ink text-paper" : "bg-paper"
@@ -353,51 +392,57 @@ function TreeBranch({
             onChange={(e) => update(node.id, e.target.value)}
           />
         </div>
-        <button
-          className={`${ghostBtn} px-2 py-1`}
-          onClick={() => addChild(node.id)}
-          aria-label="Add a deeper why"
-          title="Add a deeper why (a cause of this)"
-        >
-          <IconArrowDeeper /> deeper
-        </button>
-        {!isRoot && (
+        <div className="flex items-center gap-1 pl-1">
           <button
             className={`${ghostBtn} px-2 py-1`}
-            onClick={() => addSibling(node)}
-            aria-label="Add a why on this level"
-            title="Add another why on the same level"
+            onClick={() => addChild(node.id)}
+            aria-label="Ask why — add a deeper cause"
+            title="Ask why — add a cause of this"
           >
-            <IconPlus /> same level
+            <IconArrowDeeper /> why?
           </button>
-        )}
-        {!isRoot && (
-          <button
-            className="rounded-md p-1.5 text-slate hover:bg-mist hover:text-brand"
-            onClick={() => remove(node.id)}
-            aria-label="Remove branch"
-          >
-            <IconTrash />
-          </button>
-        )}
+          {!isRoot && (
+            <button
+              className={`${ghostBtn} px-2 py-1`}
+              onClick={() => addSibling(node)}
+              aria-label="Add another cause at this level"
+              title="Add another cause at this level"
+            >
+              <IconPlus /> and
+            </button>
+          )}
+          {!isRoot && (
+            <button
+              className="rounded-md p-1.5 text-slate hover:bg-mist hover:text-brand"
+              onClick={() => remove(node.id)}
+              aria-label="Remove branch"
+            >
+              <IconTrash />
+            </button>
+          )}
+        </div>
       </div>
       {children.length > 0 && (
-        <ul className="ml-5 border-l border-dashed border-line pl-4">
-          {children.map((c) => (
-            <TreeBranch
-              key={c.id}
-              node={c}
-              nodes={nodes}
-              depth={depth + 1}
-              update={update}
-              addChild={addChild}
-              addSibling={addSibling}
-              remove={remove}
-            />
-          ))}
-        </ul>
+        <>
+          <span className="h-0 w-6 shrink-0 self-center border-t-2 border-dashed border-line" />
+          <div className="flex flex-col gap-3 border-l-2 border-dashed border-line pl-6">
+            {children.map((c) => (
+              <div key={c.id} className="relative flex items-center">
+                <span className="absolute -left-6 top-1/2 h-0 w-6 -translate-y-1/2 border-t-2 border-dashed border-line" />
+                <TreeBranch
+                  node={c}
+                  nodes={nodes}
+                  update={update}
+                  addChild={addChild}
+                  addSibling={addSibling}
+                  remove={remove}
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -407,7 +452,7 @@ function TreeWidget({ d }: { d: Deliverable }) {
 
   const update = (id: string, text: string) => setNodes(nodes.map((n) => (n.id === id ? { ...n, text } : n)));
   const addChild = (parent: string) => setNodes([...nodes, { id: uid(), parent, text: "" }]);
-  // A sibling shares the node's parent — a "why" on the same level. The root has
+  // A sibling shares the node's parent — another cause at the same level. The root has
   // no parent, so a sibling of it would be a second root; disallowed in the UI.
   const addSibling = (node: TreeNode) =>
     node.parent === null ? undefined : setNodes([...nodes, { id: uid(), parent: node.parent, text: "" }]);
@@ -422,18 +467,8 @@ function TreeWidget({ d }: { d: Deliverable }) {
   };
 
   return (
-    <div className="rounded-lg bg-panel/40 p-4 hairline">
-      <ul>
-        <TreeBranch
-          node={root}
-          nodes={nodes}
-          depth={0}
-          update={update}
-          addChild={addChild}
-          addSibling={addSibling}
-          remove={remove}
-        />
-      </ul>
+    <div className="overflow-x-auto rounded-lg bg-panel/40 p-4 hairline">
+      <TreeBranch node={root} nodes={nodes} update={update} addChild={addChild} addSibling={addSibling} remove={remove} />
     </div>
   );
 }
@@ -852,6 +887,134 @@ function UploadWidget({ d }: { d: Deliverable }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* tracker — the sprint Task Tracker                                   */
+/* ------------------------------------------------------------------ */
+
+interface TrackerRow {
+  owner: string;
+  status: TrackerStatus;
+  staffChecked: boolean;
+  notes: string;
+}
+type TrackerState = Record<string, TrackerRow>;
+
+const EMPTY_ROW: TrackerRow = { owner: "", status: "not-started", staffChecked: false, notes: "" };
+const STATUS_LABELS: Record<TrackerStatus, string> = {
+  "not-started": "Not started",
+  "in-progress": "In progress",
+  done: "Done",
+};
+const STATUS_COLORS: Record<TrackerStatus, string> = {
+  "not-started": "var(--color-slate)",
+  "in-progress": "var(--color-sky)",
+  done: "var(--color-green)",
+};
+const TRACKER_GRID = "grid-cols-[1fr_150px_136px_96px_220px]";
+const STAFF_ONLY = "For instructor use — not editable by students";
+
+function TrackerRowView({
+  task,
+  row,
+  onChange,
+  striped,
+}: {
+  task: { key: string; label: string };
+  row: TrackerRow;
+  onChange: (patch: Partial<TrackerRow>) => void;
+  striped: boolean;
+}) {
+  return (
+    <div className={`grid ${TRACKER_GRID} items-center gap-3 border-t border-line px-3 py-2 text-sm ${striped ? "bg-panel/30" : ""}`}>
+      <span className="text-ink">{task.label}</span>
+      <select
+        className="rounded-md bg-paper px-2 py-1 text-xs font-medium hairline"
+        value={row.owner}
+        onChange={(e) => onChange({ owner: e.target.value })}
+      >
+        <option value="">—</option>
+        {MOCK_TEAM_MEMBERS.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+      <select
+        className="rounded-md bg-paper px-2 py-1 text-xs font-medium hairline"
+        value={row.status}
+        onChange={(e) => onChange({ status: e.target.value as TrackerStatus })}
+        style={{ color: STATUS_COLORS[row.status] }}
+      >
+        {(Object.keys(STATUS_LABELS) as TrackerStatus[]).map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABELS[s]}
+          </option>
+        ))}
+      </select>
+      <span className="flex justify-center" title={STAFF_ONLY}>
+        <input type="checkbox" checked={row.staffChecked} disabled className="h-4 w-4 rounded border-line opacity-60" />
+      </span>
+      <span className="truncate text-xs text-slate" title={row.notes || STAFF_ONLY}>
+        {row.notes || "—"}
+      </span>
+    </div>
+  );
+}
+
+function TrackerWidget({ d }: { d: Deliverable }) {
+  const seeded: TrackerState = {};
+  for (const group of d.trackerGroups ?? []) {
+    for (const task of group.tasks) {
+      if (task.seed) seeded[task.key] = { ...EMPTY_ROW, ...task.seed };
+    }
+  }
+  const [state, setState] = useDeliverable<TrackerState>(d.id, seeded);
+  const getRow = (key: string): TrackerRow => state[key] ?? EMPTY_ROW;
+  const setRow = (key: string, patch: Partial<TrackerRow>) =>
+    setState({ ...state, [key]: { ...getRow(key), ...patch } });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 rounded-lg bg-panel/60 px-4 py-2.5 hairline">
+        <span className="text-sm">
+          Tracking for <span className="font-semibold">{MOCK_COMPANY_NAME}</span>
+        </span>
+        <span
+          className="ml-auto shrink-0 rounded-full bg-mist px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-slate"
+          title="This company name and team roster are placeholders — real data will load from your team's account once sign-in is live."
+        >
+          Mock data
+        </span>
+      </div>
+      {d.trackerGroups!.map((group) => (
+        <div key={group.label} className="overflow-hidden rounded-lg hairline">
+          <div className="eyebrow bg-mist px-3 py-1.5" style={{ borderLeft: "3px solid var(--color-brand)" }}>
+            {group.label}
+          </div>
+          <div className={`grid ${TRACKER_GRID} gap-3 bg-panel/50 px-3 py-1.5 text-[0.65rem] uppercase tracking-wider text-slate`}>
+            <span>Task</span>
+            <span>Owner</span>
+            <span>Status</span>
+            <span className="text-center" title={STAFF_ONLY}>
+              Staff checked
+            </span>
+            <span title={STAFF_ONLY}>Notes</span>
+          </div>
+          {group.tasks.map((task, i) => (
+            <TrackerRowView
+              key={task.key}
+              task={task}
+              row={getRow(task.key)}
+              onChange={(patch) => setRow(task.key, patch)}
+              striped={i % 2 === 1}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* dispatcher                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -877,6 +1040,8 @@ export function Widget({ d }: { d: Deliverable }) {
       return <ChecklistWidget d={d} />;
     case "palette":
       return <PaletteWidget d={d} />;
+    case "tracker":
+      return <TrackerWidget d={d} />;
     default:
       return null;
   }
