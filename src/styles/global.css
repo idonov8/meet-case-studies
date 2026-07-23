@@ -132,20 +132,25 @@
   color: color-mix(in srgb, var(--color-slate) 65%, transparent);
 }
 
-/* Rich text editor — toolbar show/hide animation */
+/* Rich text editor — floating toolbar, shown on focus */
+/* Positioned absolutely (out of normal flow) so appearing on focus never shifts the editor
+   content down under the pointer mid-click — an in-flow toolbar that pushes content down
+   causes the click's mouseup to land on whatever slid into its place, cancelling focus.
+   It floats just above the field as an overlay, so there's no reserved empty space. */
+.rte {
+  position: relative;
+}
 .rte-toolbar {
-  max-height: 0;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 20;
   opacity: 0;
-  transform: translateY(-4px);
-  overflow: hidden;
+  transform: translateY(4px);
   pointer-events: none;
-  transition:
-    max-height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.16s ease,
-    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.16s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .rte-toolbar--visible {
-  max-height: 5rem; /* generous headroom in case the buttons wrap to a second row on narrow widths */
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;

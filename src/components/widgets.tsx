@@ -69,8 +69,8 @@ function RichTextToolbar({ editor, visible }: { editor: Editor; visible: boolean
     }
   };
   return (
-    <div className={`rte-toolbar flex items-center gap-1 ${visible ? "rte-toolbar--visible" : ""}`}>
-      <div className="flex w-full flex-wrap items-center gap-1 border-b border-line pb-2 mb-2">
+    <div className={`rte-toolbar ${visible ? "rte-toolbar--visible" : ""}`}>
+      <div className="flex flex-wrap items-center gap-1 rounded-lg bg-paper px-2 py-1.5 shadow-md hairline">
         <MenuButton className="font-bold" label="B" title="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} />
         <MenuButton className="italic" label="I" title="Italic" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} />
         <MenuButton className="underline" label="U" title="Underline" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} />
@@ -261,8 +261,11 @@ function SectionsWidget({ d }: { d: Deliverable }) {
       {d.sections!.map((s) => {
         const type = s.type ?? "textarea";
         const set = (v: string) => setValue({ ...value, [s.key]: v });
+        // A rich text field can't live inside a <label>: the label redirects clicks to its
+        // first labelable descendant (a toolbar button), stealing focus from the editor.
+        const Wrapper = type === "textarea" ? "div" : "label";
         return (
-          <label
+          <Wrapper
             key={s.key}
             className={`flex flex-col gap-1.5 rounded-lg bg-panel/60 px-4 py-3 hairline ${
               type === "textarea" ? "sm:col-span-2" : ""
@@ -292,7 +295,7 @@ function SectionsWidget({ d }: { d: Deliverable }) {
             ) : (
               <RichTextField value={value[s.key] ?? ""} onChange={set} placeholder={s.placeholder} />
             )}
-          </label>
+          </Wrapper>
         );
       })}
       </div>
@@ -365,12 +368,17 @@ function RecordsWidget({ d }: { d: Deliverable }) {
             <FieldInput field={fields[0]} value={r[fields[0].key]} onChange={(v) => update(r._id, fields[0].key, v)} />
           ) : (
             <div className="grid gap-2.5 sm:grid-cols-2">
-              {fields.map((f) => (
-                <label key={f.key} className={`flex flex-col gap-1 ${f.type === "textarea" ? "sm:col-span-2" : ""}`}>
-                  <span className="eyebrow">{f.label}</span>
-                  <FieldInput field={f} value={r[f.key]} onChange={(v) => update(r._id, f.key, v)} />
-                </label>
-              ))}
+              {fields.map((f) => {
+                // A rich text field can't live inside a <label> (it steals the click for its
+                // first toolbar button); use a plain <div> for those.
+                const Wrapper = f.type === "textarea" ? "div" : "label";
+                return (
+                  <Wrapper key={f.key} className={`flex flex-col gap-1 ${f.type === "textarea" ? "sm:col-span-2" : ""}`}>
+                    <span className="eyebrow">{f.label}</span>
+                    <FieldInput field={f} value={r[f.key]} onChange={(v) => update(r._id, f.key, v)} />
+                  </Wrapper>
+                );
+              })}
             </div>
           )}
           <button
@@ -800,14 +808,14 @@ function LifecycleWidget({ d }: { d: Deliverable }) {
           })}
         </svg>
       </div>
-      <label className="mt-2 flex flex-col gap-1">
+      <div className="mt-2 flex flex-col gap-1">
         <span className="eyebrow">Why here?</span>
         <RichTextField
           value={value.note}
           onChange={(v) => setValue({ ...value, note: v })}
           placeholder="Evidence that puts the product at this stage…"
         />
-      </label>
+      </div>
     </div>
   );
 }
@@ -868,14 +876,14 @@ function PaletteWidget({ d }: { d: Deliverable }) {
 
   return (
     <div className="rounded-lg bg-panel/40 p-4 hairline">
-      <label className="mb-4 flex flex-col gap-1">
+      <div className="mb-4 flex flex-col gap-1">
         <span className="eyebrow">Assessment — are they communicating well? What needs to change?</span>
         <RichTextField
           value={value.assessment}
           onChange={(v) => setValue({ ...value, assessment: v })}
           placeholder="Their visual identity says…  It works / falls short because…"
         />
-      </label>
+      </div>
       <span className="eyebrow">Brand palette</span>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         {value.swatches.map((hex, i) => (
@@ -912,14 +920,14 @@ function PaletteWidget({ d }: { d: Deliverable }) {
           <IconPlus />
         </button>
       </div>
-      <label className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1">
         <span className="eyebrow">Tone of voice</span>
         <RichTextField
           value={value.tone}
           onChange={(v) => setValue({ ...value, tone: v })}
           placeholder="Confident, playful, technical…  Three words that capture the brand."
         />
-      </label>
+      </div>
     </div>
   );
 }
