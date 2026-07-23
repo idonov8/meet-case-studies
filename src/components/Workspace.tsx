@@ -31,7 +31,7 @@ function Ring({ value, size = 22 }: { value: number; size?: number }) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke={done ? "var(--color-teal)" : "var(--color-coral)"}
+        stroke={done ? "var(--color-green)" : "var(--color-brand)"}
         strokeWidth="2.5"
         strokeLinecap="round"
         strokeDasharray={c}
@@ -47,13 +47,18 @@ function DeliverableCard({ d, n }: { d: Deliverable; n: number }) {
   return (
     <article id={`d-${d.id}`} className="scroll-mt-24 rounded-[--radius-card] bg-paper p-5 hairline shadow-sm sm:p-6">
       <header className="mb-4 flex items-start gap-3">
-        <span className="mt-0.5 font-mono text-sm text-coral">{String(n).padStart(2, "0")}</span>
+        <span className="mt-0.5 font-mono text-sm text-brand">{String(n).padStart(2, "0")}</span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold leading-tight">{d.title}</h3>
             <span className="rounded-full bg-mist px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-slate">
               Day {d.day}
             </span>
+            {d.optional && (
+              <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider text-slate">
+                Optional
+              </span>
+            )}
           </div>
           <p className="mt-1 text-sm text-slate">{d.prompt}</p>
         </div>
@@ -75,7 +80,7 @@ function PartNav({ part, active, onSelect }: { part: Part; active: boolean; onSe
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className={`font-mono text-[0.6rem] uppercase tracking-widest ${active ? "text-coral" : "text-slate"}`}>
+        <span className={`font-mono text-[0.6rem] uppercase tracking-widest ${active ? "text-brand" : "text-slate"}`}>
           Part {part.index}
         </span>
         <span className={`font-mono text-xs ${active ? "text-paper/80" : "text-slate"}`}>{pct}%</span>
@@ -85,7 +90,7 @@ function PartNav({ part, active, onSelect }: { part: Part; active: boolean; onSe
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-black/10">
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: active ? "var(--color-coral)" : "var(--color-teal)" }}
+          style={{ width: `${pct}%`, background: active ? "var(--color-brand)" : "var(--color-green)" }}
         />
       </div>
     </button>
@@ -112,14 +117,12 @@ export default function Workspace() {
       {/* header */}
       <header className="sticky top-0 z-30 border-b border-line bg-paper/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-          <a href={BASE} className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-ink font-display text-sm font-bold text-coral">
-              S
-            </span>
-            <span className="hidden font-display text-base font-bold sm:block">Sprint Room</span>
+          <a href={BASE} className="flex items-center gap-2.5">
+            <img src={`${BASE.replace(/\/$/, "")}/meet-logo.svg`} alt="meet" className="h-6 w-auto" />
+            <span className="hidden text-sm font-semibold text-slate sm:block">Case Studies</span>
           </a>
           <div className="ml-auto flex items-center gap-4">
-            <span className="hidden font-mono text-xs text-coral-deep sm:block">{countdown}</span>
+            <span className="hidden font-mono text-xs text-brand-deep sm:block">{countdown}</span>
             <div className="flex items-center gap-2">
               <Ring value={overall} size={26} />
               <span className="font-mono text-xs text-slate">
@@ -129,13 +132,13 @@ export default function Workspace() {
             {team && (
               <span className="hidden rounded-full bg-mist px-3 py-1 text-xs font-medium md:block">{team}</span>
             )}
-            <button onClick={logout} className="text-xs text-slate hover:text-coral" title="Sign out">
+            <button onClick={logout} className="text-xs text-slate hover:text-brand" title="Sign out">
               Sign out
             </button>
           </div>
         </div>
         <div className="h-0.5 w-full bg-mist">
-          <div className="h-full bg-coral transition-all duration-500" style={{ width: `${pct}%` }} />
+          <div className="h-full bg-brand transition-all duration-500" style={{ width: `${pct}%` }} />
         </div>
       </header>
 
@@ -161,7 +164,7 @@ export default function Workspace() {
         {/* deliverables */}
         <section key={activeId} className="rise flex flex-col gap-4">
           <div className="rounded-[--radius-card] bg-ink p-6 text-paper">
-            <span className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-coral">
+            <span className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-brand">
               Part {part.index} — {part.tagline}
             </span>
             <h2 className="mt-1 font-display text-3xl font-extrabold">{part.title}</h2>
@@ -186,7 +189,7 @@ function CheckpointLink({ d, n }: { d: Deliverable; n: number }) {
       >
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-            progress >= 1 ? "bg-teal" : progress > 0 ? "bg-coral" : "bg-line"
+            progress >= 1 ? "bg-green" : progress > 0 ? "bg-brand" : "bg-line"
           }`}
         />
         <span className="font-mono text-[0.6rem]">{String(n).padStart(2, "0")}</span>

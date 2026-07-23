@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = "Sprint Room — Case Study Deliverables",
-  description = "An interactive workspace for student teams to draft, structure, and track every case-study deliverable across the four-day sprint.",
+  title = "meet — Case Study Deliverables",
+  description = "An interactive workspace for MEET case-study teams to draft, structure, and track every deliverable across the four-day sprint.",
 } = Astro.props;
 ---
 
@@ -22,8 +22,13 @@ const {
     <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/favicon.svg`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      meet's brand face is Proxima Nova (licensed). If you have an Adobe Fonts/Typekit
+      kit, drop its <link> here and the CSS stack will use it automatically. Montserrat is
+      loaded below as the free fallback so the app looks right without the kit.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
     <title>{title}</title>
